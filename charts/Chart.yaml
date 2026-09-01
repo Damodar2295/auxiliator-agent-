@@ -1,0 +1,6 @@
+apiVersion: v2
+name: auxiliator-agent
+description: Auxiliator AIX/LangGraph service
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

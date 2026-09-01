@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: context_engine
+      POSTGRES_USER: auxiliator
+      POSTGRES_PASSWORD: auxiliator-local
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U auxiliator -d context_engine"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - auxiliator_postgres:/var/lib/postgresql/data
+
+volumes:
+  auxiliator_postgres:

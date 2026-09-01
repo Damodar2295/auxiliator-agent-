@@ -1,0 +1,1 @@
+"""Auxiliator configuration package."""

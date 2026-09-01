@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels: {app: {{ .Release.Name }}}
+  template:
+    metadata:
+      labels: {app: {{ .Release.Name }}}
+    spec:
+      containers:
+        - name: auxiliator-agent
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          ports: [{containerPort: 8080}]
+          env:
+            - name: EPAS_ENV
+              value: {{ .Values.env.EPAS_ENV | quote }}
+            - name: LANGGRAPH_CHECKPOINTER_BACKEND
+              value: {{ .Values.env.LANGGRAPH_CHECKPOINTER_BACKEND | quote }}
+          readinessProbe:
+            httpGet: {path: /api/v1/health/ready, port: 8080}
+          livenessProbe:
+            httpGet: {path: /api/v1/health/live, port: 8080}

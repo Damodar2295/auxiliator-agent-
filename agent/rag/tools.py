@@ -1,4 +1,5 @@
 """Tools for the chatbot using Amex Context Engine."""
+
 from __future__ import annotations
 
 import traceback
@@ -35,9 +36,7 @@ async def search_documents_by_query(
             if DEBUG_MODE:
                 print(f"Query {idx}/{len(input_query_list)}: {input_query}")
             embedding = await embedding_model.ainvoke(input_query)
-            documents = await document_store.retrieval_async(
-                query_embedding=embedding, top_k=RAG_RETRIEVAL_LIMIT
-            )
+            documents = await document_store.retrieval_async(query_embedding=embedding, top_k=RAG_RETRIEVAL_LIMIT)
             body_blobs: list[str] = []
             for doc in documents:
                 score = getattr(doc, "score", None)

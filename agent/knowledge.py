@@ -1,4 +1,5 @@
 """Knowledge ingestion and retrieval helpers used by the HTTP API."""
+
 from __future__ import annotations
 
 import re
@@ -29,6 +30,10 @@ async def index_markdown(app: Any, file_path: str, department: str) -> dict[str,
     if not path.is_file() or path.suffix.lower() not in {".md", ".markdown"}:
         raise ValueError("file_path must reference an existing Markdown file")
     chunks = chunk_text(path.read_text(encoding="utf-8"))
+    try:
+        source = str(path.relative_to(Path.cwd().resolve()))
+    except ValueError:
+        source = path.name
     for index, content in enumerate(chunks):
         embedding = await app.state.embeddings.ainvoke(content)
         document = LocalDocument(
@@ -36,7 +41,7 @@ async def index_markdown(app: Any, file_path: str, department: str) -> dict[str,
             metadata={
                 "chunk_id": f"{path.stem}-{index}",
                 "document_id": path.stem,
-                "source": str(path),
+                "source": source,
                 "department": department,
             },
         )
@@ -58,7 +63,9 @@ async def seed_knowledge_base(app: Any, root: Path) -> dict[str, int]:
     return summary
 
 
-async def retrieve(app: Any, question: str, top_k: int, score_threshold: float, department: str | None) -> list[dict[str, Any]]:
+async def retrieve(
+    app: Any, question: str, top_k: int, score_threshold: float, department: str | None
+) -> list[dict[str, Any]]:
     embedding = await app.state.embeddings.ainvoke(question)
     documents = await app.state.document_store.retrieval_async(
         query_embedding=embedding,

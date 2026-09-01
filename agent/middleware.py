@@ -1,4 +1,5 @@
 """Deep-agent middleware - observability hooks around the agent loop."""
+
 from __future__ import annotations
 
 import logging

@@ -1,6 +1,10 @@
-# Auxiliator Agent
+# Salesforce Playbook Agent
 
-Auxiliator rebuilt using the supplied AIX/LangGraph backend-agent boilerplate.
+An AIX/LangGraph assistant that recommends seller-reviewed next-best-action playbooks for
+Salesforce opportunities using approved playbooks and historical win/loss patterns.
+
+The repository ships with synthetic SME-review templates only. Replace or validate these
+templates with governed Salesforce history before production use.
 
 ## Local start
 
@@ -19,7 +23,31 @@ make db-up
 ./scripts/start_local.sh
 ```
 
-At startup, every Markdown file under `knowledge/<department>/` is chunked, embedded, and idempotently upserted into PostgreSQL. PostgreSQL is the system of record for chunk content, metadata, and embeddings; no separate vector-database service is used. The internal SafeChain embedding provider is selected when installed, with a deterministic local embedding adapter for development.
+At startup, every Markdown file under `knowledge/sales/` is chunked, embedded, and idempotently
+upserted into PostgreSQL. PostgreSQL with pgvector is the system of record for content, metadata,
+and embeddings. The internal SafeChain embedding provider is selected when installed, with a
+deterministic local embedding adapter for development.
+
+## Recommend a playbook
+
+```bash
+curl -X POST http://127.0.0.1:8080/api/v1/playbook/recommend \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "opportunity_name": "Acme Expansion",
+    "stage": "Solution Validation",
+    "industry": "Financial Services",
+    "customer_segment": "Enterprise",
+    "deal_value": 250000,
+    "days_in_stage": 35,
+    "recent_activity": "Only one contact attended the last meeting",
+    "pain_points": ["manual onboarding"],
+    "competitors": ["Competitor A"]
+  }'
+```
+
+Recommendations are advisory. Customer messages, pricing, forecasts, contracts, and Salesforce
+record changes require human approval.
 
 Database commands are also available through Make:
 
@@ -39,7 +67,8 @@ Local connection details come from the ignored `.env` file:
 postgresql://auxiliator:auxiliator-local@127.0.0.1:5432/context_engine
 ```
 
-The application creates the `vector` extension, `public.knowledge_chunks` table, primary key, and department index automatically during startup.
+The application creates the `vector` extension, `public.sales_playbook_chunks` table, primary key,
+and department index automatically during startup.
 
 ## Verification
 

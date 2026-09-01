@@ -10,8 +10,12 @@ def test_chunking():
 
 @pytest.mark.asyncio
 async def test_department_filter():
-    class State: pass
-    class App: pass
+    class State:
+        pass
+
+    class App:
+        pass
+
     app = App()
     app.state = State()
     app.state.embeddings = LocalEmbeddingModel(32)

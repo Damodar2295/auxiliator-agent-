@@ -1,4 +1,5 @@
 """Agent configuration dataclass for optional multi-agent topologies."""
+
 from dataclasses import dataclass, field
 
 

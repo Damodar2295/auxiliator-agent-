@@ -1,4 +1,5 @@
 """Small wrapper compatible with the AIX middleware-chain API."""
+
 from __future__ import annotations
 
 from typing import Any

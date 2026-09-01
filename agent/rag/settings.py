@@ -1,4 +1,5 @@
 """RAG feature settings - pgvector document store connection and schema."""
+
 from __future__ import annotations
 
 import os

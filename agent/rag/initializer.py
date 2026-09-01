@@ -4,6 +4,7 @@ These functions are called from the generated ``agent/initialize.py`` lifespan.
 They populate ``app.state.embeddings`` and ``app.state.document_store`` which
 are read lazily by the ``search_documents_by_query`` tool at call-time.
 """
+
 from __future__ import annotations
 
 import asyncio

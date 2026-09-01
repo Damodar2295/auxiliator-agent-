@@ -1,4 +1,5 @@
 """Main FastAPI application."""
+
 from __future__ import annotations
 
 import argparse
@@ -46,16 +47,39 @@ class RetrievalRequest(BaseModel):
     department: str | None = None
 
 
-
 class IndexRequest(BaseModel):
     file_path: str
     department: str
 
 
+class PlaybookRequest(BaseModel):
+    opportunity_name: str = Field(min_length=1)
+    stage: str = Field(min_length=1)
+    industry: str | None = None
+    customer_segment: str | None = None
+    deal_value: float | None = Field(default=None, ge=0)
+    product: str | None = None
+    region: str | None = None
+    days_in_stage: int | None = Field(default=None, ge=0)
+    recent_activity: str | None = None
+    pain_points: list[str] = Field(default_factory=list)
+    competitors: list[str] = Field(default_factory=list)
+    user_id: str | None = None
+    session_id: str | None = None
+
+
+class PlaybookResponse(BaseModel):
+    opportunity_name: str
+    recommended_playbook: str
+    user_id: str
+    session_id: str
+    sources: list[Source]
+
+
 app = FastAPI(
-    title="Auxiliator Agent",
-    description="Assembled with the AIX agent boilerplate.",
-    version="0.1.0",
+    title="Salesforce Playbook Agent",
+    description="Evidence-grounded next-best-action recommendations for Salesforce opportunities.",
+    version="0.2.0",
     lifespan=lifespan,
 )
 app.add_middleware(
@@ -79,7 +103,7 @@ async def request_context(request: Request, call_next):
 
 @app.get("/")
 async def root():
-    return {"message": "Auxiliator Agent API", "version": "0.1.0"}
+    return {"message": "Salesforce Playbook Agent API", "version": "0.2.0"}
 
 
 @app.get("/api/v1/health/live")
@@ -133,11 +157,77 @@ async def chat(request: ChatRequest):
             (str(message.content) for message in reversed(messages) if getattr(message, "type", None) == "ai"),
             "",
         )
-        sources = [Source(source=item.get("source", ""), department=item.get("department"), score=item["score"]) for item in matches]
+        sources = [
+            Source(source=item.get("source", ""), department=item.get("department"), score=item["score"])
+            for item in matches
+        ]
         return ChatResponse(response=response_text, user_id=user_id, session_id=session_id, sources=sources)
     except Exception as exc:
         logger.exception("Chat failed")
         raise HTTPException(status_code=503, detail="Assistant service is temporarily unavailable") from exc
+
+
+@app.post("/api/v1/playbook/recommend", response_model=PlaybookResponse)
+async def recommend_playbook(request: PlaybookRequest):
+    """Recommend a seller-reviewed playbook grounded in approved sales knowledge."""
+    user_id = resolve_identity(request.user_id, "user")
+    session_id = resolve_identity(request.session_id, "session")
+    opportunity_facts = {
+        "opportunity_name": request.opportunity_name,
+        "stage": request.stage,
+        "industry": request.industry,
+        "customer_segment": request.customer_segment,
+        "deal_value": request.deal_value,
+        "product": request.product,
+        "region": request.region,
+        "days_in_stage": request.days_in_stage,
+        "recent_activity": request.recent_activity,
+        "pain_points": request.pain_points,
+        "competitors": request.competitors,
+    }
+    query = "Salesforce playbook for " + ", ".join(
+        f"{key}={value}" for key, value in opportunity_facts.items() if value not in (None, "", [])
+    )
+    try:
+        matches = await retrieve(app, query, 7, 0.0, "sales")
+        context = "\n\n".join(f"Source: {item.get('source', '')}\n{item['content']}" for item in matches)
+        prompt = (
+            "Create a seller-reviewed next-best-action playbook for this Salesforce opportunity.\n"
+            f"Opportunity facts: {opportunity_facts}\n\n"
+            "Return these sections: Assessment, Recommended actions (owner and timing), Risks, "
+            "Missing information, Evidence, and Confidence. Do not invent facts or perform CRM actions.\n\n"
+            f"Retrieved context:\n{context or 'No matching knowledge was found.'}"
+        )
+        result = await app.state.graph.ainvoke(
+            {"messages": [HumanMessage(content=prompt)]},
+            config={"configurable": {"thread_id": session_id, "user_id": user_id}},
+        )
+        response_text = next(
+            (
+                str(message.content)
+                for message in reversed(result.get("messages", []))
+                if getattr(message, "type", None) == "ai"
+            ),
+            "",
+        )
+        sources = [
+            Source(
+                source=item.get("source", ""),
+                department=item.get("department"),
+                score=item["score"],
+            )
+            for item in matches
+        ]
+        return PlaybookResponse(
+            opportunity_name=request.opportunity_name,
+            recommended_playbook=response_text,
+            user_id=user_id,
+            session_id=session_id,
+            sources=sources,
+        )
+    except Exception as exc:
+        logger.exception("Playbook recommendation failed")
+        raise HTTPException(status_code=503, detail="Playbook recommendation is temporarily unavailable") from exc
 
 
 if __name__ == "__main__":
@@ -147,4 +237,9 @@ if __name__ == "__main__":
     parser.add_argument("--host", default="0.0.0.0")
     parser.add_argument("--port", type=int, default=8080)
     args = parser.parse_args()
-    uvicorn.run("agent.main:app", host=args.host, port=args.port, log_level="debug" if os.getenv("DEBUG_MODE", "false").lower() == "true" else "info")
+    uvicorn.run(
+        "agent.main:app",
+        host=args.host,
+        port=args.port,
+        log_level="debug" if os.getenv("DEBUG_MODE", "false").lower() == "true" else "info",
+    )

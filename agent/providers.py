@@ -1,4 +1,5 @@
 """Narrow adapters for enterprise AIX providers with deterministic local fallbacks."""
+
 from __future__ import annotations
 
 import hashlib
@@ -132,8 +133,14 @@ class PostgresChunkStore:
                         updated_at = NOW()
                     """,
                     (
-                        metadata["chunk_id"], metadata["document_id"], metadata["source"],
-                        metadata["department"], document.content, content_hash, vector, json.dumps(metadata),
+                        metadata["chunk_id"],
+                        metadata["document_id"],
+                        metadata["source"],
+                        metadata["department"],
+                        document.content,
+                        content_hash,
+                        vector,
+                        json.dumps(metadata),
                     ),
                 )
 

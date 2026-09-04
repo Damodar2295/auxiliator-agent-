@@ -7,13 +7,17 @@ import logging
 import os
 import time
 import uuid
+from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from langchain_core.messages import HumanMessage
 from pydantic import BaseModel, Field
 
 from agent.initialize import lifespan
+from agent.intelligence.api import router as intelligence_router
+from agent.intelligence.contracts import EntityScope, IntelligenceRequest, TriggerType
 from agent.knowledge import index_markdown, resolve_identity, retrieve
 from config.constants import RAG_RETRIEVAL_THRESHOLD
 
@@ -53,6 +57,7 @@ class IndexRequest(BaseModel):
 
 
 class PlaybookRequest(BaseModel):
+    opportunity_id: str | None = None
     opportunity_name: str = Field(min_length=1)
     stage: str = Field(min_length=1)
     industry: str | None = None
@@ -89,6 +94,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.include_router(intelligence_router)
 
 
 @app.middleware("http")
@@ -172,6 +178,32 @@ async def recommend_playbook(request: PlaybookRequest):
     """Recommend a seller-reviewed playbook grounded in approved sales knowledge."""
     user_id = resolve_identity(request.user_id, "user")
     session_id = resolve_identity(request.session_id, "session")
+    if request.opportunity_id:
+        try:
+            governed = await app.state.intelligence_agent.execute(
+                IntelligenceRequest(
+                    request_id=f"playbook-{uuid.uuid4().hex[:12]}",
+                    trigger_type=TriggerType.API,
+                    query="Assess this opportunity risk and recommend governed seller actions.",
+                    scope=EntityScope(opportunity_id=request.opportunity_id),
+                    requested_skill_id="opportunity-risk",
+                    user_id=user_id,
+                    correlation_id=session_id,
+                )
+            )
+            return PlaybookResponse(
+                opportunity_name=request.opportunity_name,
+                recommended_playbook=str(governed.final_outcome),
+                user_id=user_id,
+                session_id=session_id,
+                sources=[
+                    Source(source=item.source_type, department="sales", score=item.reliability)
+                    for item in governed.evidence
+                ],
+            )
+        except Exception as exc:
+            logger.exception("Governed playbook recommendation failed")
+            raise HTTPException(status_code=503, detail="Playbook recommendation is temporarily unavailable") from exc
     opportunity_facts = {
         "opportunity_name": request.opportunity_name,
         "stage": request.stage,
@@ -228,6 +260,11 @@ async def recommend_playbook(request: PlaybookRequest):
     except Exception as exc:
         logger.exception("Playbook recommendation failed")
         raise HTTPException(status_code=503, detail="Playbook recommendation is temporarily unavailable") from exc
+
+
+frontend_dist = Path(__file__).parents[1] / "frontend" / "dist"
+if frontend_dist.exists():
+    app.mount("/app", StaticFiles(directory=frontend_dist, html=True), name="intelligence-hub")
 
 
 if __name__ == "__main__":

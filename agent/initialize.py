@@ -17,6 +17,7 @@ from pathlib import Path
 from fastapi import FastAPI
 
 from agent.factory import GraphFactory
+from agent.intelligence.bootstrap import initialize_intelligence
 from agent.knowledge import seed_knowledge_base
 from agent.rag.initializer import initialize_document_store, initialize_embedding_model
 from config.constants import DEBUG_MODE, EPAS_ENV, SAFECHAIN_CONFIG_PATH
@@ -30,6 +31,7 @@ async def lifespan(app: FastAPI):
     load_environment()
     os.environ.setdefault("CONFIG_PATH", SAFECHAIN_CONFIG_PATH)
     init_settings()
+    await initialize_intelligence(app)
     if DEBUG_MODE:
         logging.basicConfig(level=logging.DEBUG)
         print(f"Starting up ({EPAS_ENV})")
@@ -49,3 +51,7 @@ async def lifespan(app: FastAPI):
             pass
     if hasattr(app.state, "document_store") and hasattr(app.state.document_store, "close"):
         await app.state.document_store.close()
+    if hasattr(app.state, "governance_repository"):
+        await app.state.governance_repository.close()
+    if hasattr(app.state, "mcp_lifespan"):
+        await app.state.mcp_lifespan.__aexit__(None, None, None)

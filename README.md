@@ -6,6 +6,16 @@ Salesforce opportunities using approved playbooks and historical win/loss patter
 The repository ships with synthetic SME-review templates only. Replace or validate these
 templates with governed Salesforce history before production use.
 
+## Governed Intelligence POC
+
+Phase 3 adds a bounded governed runtime, an official MCP v2 Skill Gateway at `/mcp/`, registry-constrained Draft generation, strict role-gated lifecycle transitions, a React Skill Studio, and a unified Skills/Signals/Capabilities/Policies Catalog. Generated definitions always remain Drafts; Reviewer approval and Admin publishing are separate operations.
+
+See `docs/intelligence-agent/phase-3-report.md` for the test results and current limitations.
+
+Phase 4 adds synthetic golden evaluations and mandatory publish gates, an auditable human Review Queue, immutable published Skill snapshots with rollback-as-a-new-version, and replayable decision/trace/version Audit views. See `docs/intelligence-agent/phase-4-report.md`.
+
+Phase 5 adds replaceable enterprise adapters, bounded reliability and idempotency controls, event/batch invocation, Observability and sanitized Settings screens, and combined backend/frontend deployment gates. See `docs/intelligence-agent/architecture.md` and `docs/intelligence-agent/runbook.md`.
+
 ## Local start
 
 ```bash

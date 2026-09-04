@@ -1,4 +1,4 @@
-.PHONY: install test lint typecheck run db-up db-down db-status db-shell db-up-docker db-down-docker
+.PHONY: install test lint typecheck run frontend-install frontend-dev frontend-test frontend-build verify security-audit db-up db-down db-status db-shell db-up-docker db-down-docker
 install:
 	./scripts/install.sh
 test:
@@ -9,6 +9,17 @@ typecheck:
 	.venv/bin/mypy agent config
 run:
 	./scripts/start_local.sh
+frontend-install:
+	cd frontend && npm install
+frontend-dev:
+	cd frontend && npm run dev
+frontend-test:
+	cd frontend && npm test
+frontend-build:
+	cd frontend && npm run build
+verify: lint typecheck test frontend-test frontend-build
+security-audit:
+	! rg -n '(BEGIN (RSA|OPENSSH) PRIVATE KEY|AKIA[0-9A-Z]{16})' --glob '!frontend/node_modules/**' --glob '!.git/**' .
 db-up:
 	./scripts/start_postgres.sh
 db-down:

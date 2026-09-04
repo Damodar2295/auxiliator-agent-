@@ -1,0 +1,27 @@
+skill_id: rewards-orientation
+name: Rewards Orientation
+description: Score travel and cashback orientation from approved affinity and spend signals.
+version: 1.0.0
+owner: Rewards Intelligence
+lifecycle_state: published
+intent_examples:
+  - Is this customer more travel or cashback oriented?
+  - Which rewards orientation best fits this customer?
+  - Compare travel and cashback affinity.
+required_signals: [travel_affinity, cashback_affinity]
+optional_signals: [merchant, commodity, spend_shift, product_interest]
+required_context: [customer_id]
+reasoning_strategy: analytics
+reasoning_tier: tier_0
+output_schema:
+  type: object
+  required: [orientation, travel_score, cashback_score]
+capability_dependencies: [deterministic_scoring]
+evidence_requirements:
+  minimum_count: 2
+  freshness_days: 180
+  required_supporting_evidence: true
+policy_reference: governed-intelligence-default
+evaluation_configuration:
+  deterministic_accuracy: 1.0
+  evidence_correctness: 1.0

@@ -19,6 +19,15 @@ spec:
               value: {{ .Values.env.EPAS_ENV | quote }}
             - name: LANGGRAPH_CHECKPOINTER_BACKEND
               value: {{ .Values.env.LANGGRAPH_CHECKPOINTER_BACKEND | quote }}
+            - name: GOVERNANCE_STORE_BACKEND
+              value: {{ .Values.env.GOVERNANCE_STORE_BACKEND | quote }}
+            - name: AUTO_SEED_KNOWLEDGE
+              value: {{ .Values.env.AUTO_SEED_KNOWLEDGE | quote }}
+          {{- if .Values.secretRef }}
+          envFrom:
+            - secretRef:
+                name: {{ .Values.secretRef | quote }}
+          {{- end }}
           readinessProbe:
             httpGet: {path: /api/v1/health/ready, port: 8080}
           livenessProbe:

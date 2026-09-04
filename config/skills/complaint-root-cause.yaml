@@ -1,0 +1,27 @@
+skill_id: complaint-root-cause
+name: Complaint Root Cause Classification
+description: Classify the strongest supported cause of a customer complaint.
+version: 1.0.0
+owner: Customer Experience Intelligence
+lifecycle_state: published
+intent_examples:
+  - Why did this customer complain?
+  - Classify the root cause of the complaint.
+  - What caused the service complaint?
+required_signals: [complaint_detected, complaint_topic]
+optional_signals: [engagement_change, merchant, commodity]
+required_context: [customer_id]
+reasoning_strategy: llm_grounded
+reasoning_tier: tier_2
+output_schema:
+  type: object
+  required: [classification, explanation]
+capability_dependencies: [evidence_lookup, grounded_reasoning]
+evidence_requirements:
+  minimum_count: 2
+  freshness_days: 90
+  required_supporting_evidence: true
+policy_reference: governed-intelligence-default
+evaluation_configuration:
+  classification_accuracy: 0.9
+  evidence_correctness: 1.0

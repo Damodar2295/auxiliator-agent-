@@ -51,3 +51,10 @@ async def build():
     for name, sub in _SUB_GRAPHS.items():
         graph.add_node(name, sub)
     return graph.compile(checkpointer=checkpointer)
+
+
+def build_intelligence(**components):
+    """Construct the governed Intelligence StateGraph runtime at the graph boundary."""
+    from agent.intelligence.runtime import GovernedRuntime
+
+    return GovernedRuntime(**components)

@@ -1,0 +1,27 @@
+skill_id: opportunity-risk
+name: Opportunity Risk Assessment
+description: Identify supported blockers and next-best actions for a sales opportunity.
+version: 1.0.0
+owner: Sales Intelligence
+lifecycle_state: published
+intent_examples:
+  - What is preventing this opportunity from progressing?
+  - Assess pricing and competitor risk for this deal.
+  - Recommend the next sales play for this opportunity.
+required_signals: [sales_intent, engagement_change]
+optional_signals: [pricing_objection, competitor_mention, purchase_intent, spend_shift, product_interest]
+required_context: [opportunity_id, account_id]
+reasoning_strategy: hybrid
+reasoning_tier: tier_2
+output_schema:
+  type: object
+  required: [risk_level, blockers, recommended_actions]
+capability_dependencies: [evidence_lookup, deterministic_scoring, grounded_reasoning]
+evidence_requirements:
+  minimum_count: 2
+  freshness_days: 120
+  required_supporting_evidence: true
+policy_reference: governed-intelligence-default
+evaluation_configuration:
+  decision_accuracy: 0.9
+  evidence_correctness: 1.0

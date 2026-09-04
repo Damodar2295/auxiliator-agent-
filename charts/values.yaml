@@ -9,3 +9,6 @@ resources: {}
 env:
   EPAS_ENV: e1
   LANGGRAPH_CHECKPOINTER_BACKEND: memory
+  GOVERNANCE_STORE_BACKEND: memory
+  AUTO_SEED_KNOWLEDGE: "false"
+secretRef: ""

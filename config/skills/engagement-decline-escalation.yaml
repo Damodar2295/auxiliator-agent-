@@ -1,0 +1,27 @@
+skill_id: engagement-decline-escalation
+name: Engagement Decline Escalation
+description: Apply a governed rule to determine whether declining engagement requires review.
+version: 1.0.0
+owner: Relationship Intelligence
+lifecycle_state: published
+intent_examples:
+  - Should declining engagement be escalated?
+  - Does this account need an engagement review?
+  - Apply the engagement decline rule.
+required_signals: [engagement_change]
+optional_signals: [spend_shift, purchase_intent, sales_intent]
+required_context: [account_id]
+reasoning_strategy: deterministic_rules
+reasoning_tier: tier_0
+output_schema:
+  type: object
+  required: [escalate, rule, reason]
+capability_dependencies: [deterministic_scoring]
+evidence_requirements:
+  minimum_count: 1
+  freshness_days: 60
+  required_supporting_evidence: true
+policy_reference: governed-intelligence-default
+evaluation_configuration:
+  deterministic_accuracy: 1.0
+  policy_compliance: 1.0
